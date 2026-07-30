@@ -15,6 +15,18 @@
 
 > chdb-core is the foundational engine of the [chDB](https://github.com/chdb-io/chdb) ecosystem — an in-process SQL OLAP Engine powered by ClickHouse [^1]
 
+> [!NOTE]
+> **This is a fork of [chdb-io/chdb-core](https://github.com/chdb-io/chdb-core) carrying an experimental WASI port.**
+>
+> The work lives on the `ah/wasi-experimental` branch: a `wasm64-wasip1` build that runs the
+> embedded ClickHouse engine under stock `wasmtime` as a plain `.wasm`, importing wasip1 syscalls
+> with no Emscripten JS glue. It is separate from, and does not affect, the existing Emscripten
+> WASM target. Read queries work; MergeTree and boot-time table reloading still need a threads
+> story.
+>
+> See **[`cmake/wasi/STATUS.md`](cmake/wasi/STATUS.md)** for status, the build recipe, and
+> remaining work. Everything below is upstream chdb-core documentation and is unchanged.
+
 ## Table of Contents
 
 - [chDB Ecosystem](#chdb-ecosystem)
