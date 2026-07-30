@@ -1,0 +1,22 @@
+Subject: [PATCH] double-conversion: treat wasm64 as a correct-double-ops target
+
+The architecture chain in utils.h ends in `#error Target architecture was not
+detected`, and only `__wasm32__` is listed. Under wasm64-wasip1 the compiler
+defines `__wasm64__` instead, so the build hard-errors. wasm has IEEE-754
+doubles with no x87-style excess precision on either width, so wasm64 belongs
+in the same branch as wasm32/Emscripten. This cannot be worked around with -D
+because of the trailing #error.
+
+diff --git a/double-conversion/utils.h b/double-conversion/utils.h
+index 4f4dd71..fc6e877 100644
+--- a/double-conversion/utils.h
++++ b/double-conversion/utils.h
+@@ -150,7 +150,7 @@ int main(int argc, char** argv) {
+     defined(__riscv) || defined(__e2k__) || \
+     defined(__or1k__) || defined(__arc__) || defined(__ARC64__) || \
+     defined(__microblaze__) || defined(__XTENSA__) || \
+-    defined(__EMSCRIPTEN__) || defined(__wasm32__)
++    defined(__EMSCRIPTEN__) || defined(__wasm32__) || defined(__wasm64__)
+ #define DOUBLE_CONVERSION_CORRECT_DOUBLE_OPERATIONS 1
+ #elif defined(__mc68000__) || \
+     defined(__pnacl__) || defined(__native_client__)

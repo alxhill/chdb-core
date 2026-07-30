@@ -1,0 +1,18 @@
+Subject: [PATCH] arrow: treat wasm64 as a correct-double-ops target
+
+Identical fix to 0001, applied to arrow's vendored copy of double-conversion,
+which is compiled as part of the arrow build.
+
+diff --git a/cpp/src/arrow/vendored/double-conversion/utils.h b/cpp/src/arrow/vendored/double-conversion/utils.h
+index 332619a..eb5931a 100644
+--- a/cpp/src/arrow/vendored/double-conversion/utils.h
++++ b/cpp/src/arrow/vendored/double-conversion/utils.h
+@@ -150,7 +150,7 @@ int main(int argc, char** argv) {
+     defined(__riscv) || defined(__e2k__) || \
+     defined(__or1k__) || defined(__arc__) || defined(__ARC64__) || \
+     defined(__microblaze__) || defined(__XTENSA__) || \
+-    defined(__EMSCRIPTEN__) || defined(__wasm32__)
++    defined(__EMSCRIPTEN__) || defined(__wasm32__) || defined(__wasm64__)
+ #define DOUBLE_CONVERSION_CORRECT_DOUBLE_OPERATIONS 1
+ #elif defined(__mc68000__) || \
+     defined(__pnacl__) || defined(__native_client__)

@@ -68,6 +68,29 @@ Still missing upstream:
   support. A WASI build is single-threaded for now
   (`CHDB_WASM_SINGLE_THREADED`, same degradation as the Emscripten -st build).
 
+## Contrib patches
+
+Three contrib submodules need small patches. They are vendored in
+`cmake/wasi/patches/` rather than carried in submodule forks — a handful of
+lines against three upstream repos isn't worth three more forks, and this
+keeps `.gitmodules` pointing at the same URLs everyone else uses.
+
+```bash
+git submodule update --init --recursive
+./cmake/wasi/patches/apply.sh     # idempotent; -R to revert
+```
+
+| patch | submodule | needed for |
+|---|---|---|
+| 0001 | `double-conversion` | wasm64 only — adds `__wasm64__` to the correct-double-ops arch list, whose chain otherwise ends in `#error`. Inert on wasm32. |
+| 0002 | `arrow` | same fix in arrow's vendored copy of double-conversion. |
+| 0003 | `llvm-project` | building libunwind for wasm64 out-of-tree (llvm#185770 backport, defines the `__cpp_exception` tag). |
+| 0004 | `llvm-project` | building libc++ for wasm64 out-of-tree (restores the pruned musl locale base API header). |
+
+0003/0004 are consumed when assembling the wasm64 sysroot (below), not during
+chdb's own compile. A wasm32 build needs none of the four, but applying them
+all is harmless.
+
 ## Reproduce the wasm32 build attempt
 
 ```bash
@@ -107,11 +130,8 @@ spike: C++ exceptions caught on wasm64 under a Node host):
    `-DCMAKE_SYSTEM_NAME=WASI -DUNIX=ON`, target/sysroot as above, EH flags
    (`-fwasm-exceptions -mllvm -wasm-use-legacy-eh=false -fdeclspec`), threads
    off, exceptions on, `LIBCXX_HAS_MUSL_LIBC=OFF` (its copy_file_range path
-   doesn't exist in wasi-libc). Requires two contrib tweaks (in-tree):
-   llvm#185770 backport in `libunwind/src/Unwind-wasm.c` (defines the
-   `__cpp_exception` tag) and restoring `__locale_dir/locale_base_api/musl.h`
-   (pruned from the fork; taken from upstream release/20.x) plus its
-   CMakeLists entry.
+   doesn't exist in wasi-libc). Requires contrib patches 0003 and 0004 —
+   apply them first (see "Contrib patches" above).
    Install into the sysroot wasi-sdk-style: headers at
    `include/wasm64-wasip1/c++/v1`, an **empty** `include/c++/v1` (clang's
    version-detection probe), libs into `lib/wasm64-wasip1/`.
@@ -185,4 +205,4 @@ guards or cmake exclusion, not shims.
    wasm64 — which today means a community wasi-libc fork, a custom libc++/
    libunwind build (recipe proven in the wasm64 spike), a custom host shim
    (`*_wasm64` import ABI — no standard runtime accepts it), and one
-   libunwind backport (llvm#185770, already applied in contrib).
+   libunwind backport (llvm#185770, vendored as contrib patch 0003).

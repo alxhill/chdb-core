@@ -1,0 +1,59 @@
+Subject: [PATCH] libcxx: restore __locale_dir/locale_base_api/musl.h
+
+The ClickHouse llvm-project fork prunes this header, but the wasm64 libc++
+build selects the musl locale base API (wasi-libc's locale surface is
+musl-derived). Restored verbatim from upstream release/20.x, plus its entry
+in the installed-headers list so it lands in the sysroot.
+
+Needed when building libc++ for wasm64-wasip1 out of
+contrib/llvm-project/runtimes (see cmake/wasi/STATUS.md).
+
+diff --git a/libcxx/include/CMakeLists.txt b/libcxx/include/CMakeLists.txt
+index 787cfffa5..10ae615b0 100644
+--- a/libcxx/include/CMakeLists.txt
++++ b/libcxx/include/CMakeLists.txt
+@@ -524,6 +524,7 @@ set(files
+   __locale_dir/locale_base_api.h
+   __locale_dir/locale_base_api/bsd_locale_fallbacks.h
+   __locale_dir/locale_base_api/ibm.h
++  __locale_dir/locale_base_api/musl.h
+   __locale_dir/locale_base_api/openbsd.h
+   __locale_dir/messages.h
+   __locale_dir/money.h
+diff --git a/libcxx/include/__locale_dir/locale_base_api/musl.h b/libcxx/include/__locale_dir/locale_base_api/musl.h
+new file mode 100644
+index 000000000..1653214cd
+--- /dev/null
++++ b/libcxx/include/__locale_dir/locale_base_api/musl.h
+@@ -0,0 +1,31 @@
++// -*- C++ -*-
++//===-----------------------------------------------------------------------===//
++//
++// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
++// See https://llvm.org/LICENSE.txt for license information.
++// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++//
++//===----------------------------------------------------------------------===//
++// This adds support for the extended locale functions that are currently
++// missing from the Musl C library.
++//
++// This only works when the specified locale is "C" or "POSIX", but that's
++// about as good as we can do without implementing full xlocale support
++// in Musl.
++//===----------------------------------------------------------------------===//
++
++#ifndef _LIBCPP___LOCALE_DIR_LOCALE_BASE_API_MUSL_H
++#define _LIBCPP___LOCALE_DIR_LOCALE_BASE_API_MUSL_H
++
++#include <cstdlib>
++#include <cwchar>
++
++inline _LIBCPP_HIDE_FROM_ABI long long strtoll_l(const char* __nptr, char** __endptr, int __base, locale_t) {
++  return ::strtoll(__nptr, __endptr, __base);
++}
++
++inline _LIBCPP_HIDE_FROM_ABI unsigned long long strtoull_l(const char* __nptr, char** __endptr, int __base, locale_t) {
++  return ::strtoull(__nptr, __endptr, __base);
++}
++
++#endif // _LIBCPP___LOCALE_DIR_LOCALE_BASE_API_MUSL_H
