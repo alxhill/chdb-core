@@ -40,7 +40,10 @@ add_subdirectory (local)
 add_subdirectory (server)
 # chdb_spec
 
-if (OS_WASM)
+if (OS_WASI)
+    # WASI target: plain-WASI CLI, no Emscripten JS glue.
+    add_subdirectory (wasi)
+elseif (OS_WASM)
     add_subdirectory (wasm)
 endif ()
 

@@ -15,13 +15,15 @@ enum class HasAnyAllTokensMode : uint8_t
 
 struct HasAnyTokensTraits
 {
-    static constexpr String name = "hasAnyTokens";
+    /// const char * rather than constexpr String: the literal exceeds the SSO
+    /// capacity of a 32-bit std::string, which breaks constant evaluation there.
+    static constexpr const char * name = "hasAnyTokens";
     static constexpr HasAnyAllTokensMode mode = HasAnyAllTokensMode::Any;
 };
 
 struct HasAllTokensTraits
 {
-    static constexpr String name = "hasAllTokens";
+    static constexpr const char * name = "hasAllTokens";
     static constexpr HasAnyAllTokensMode mode = HasAnyAllTokensMode::All;
 };
 

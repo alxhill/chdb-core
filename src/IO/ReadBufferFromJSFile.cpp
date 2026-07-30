@@ -1,6 +1,56 @@
 #include <IO/ReadBufferFromJSFile.h>
 
-#if defined(OS_WASM)
+#if defined(OS_WASI)
+
+/// WASI has no JS host, so no registered JS files exist: size queries report
+/// "not registered" (callers fall back to the real, preopened filesystem) and
+/// reads fail cleanly if ever reached.
+
+#include <Common/Exception.h>
+
+namespace DB
+{
+
+namespace ErrorCodes
+{
+    extern const int NETWORK_ERROR;
+    extern const int CANNOT_SEEK_THROUGH_FILE;
+}
+
+ReadBufferFromJSFile::ReadBufferFromJSFile(std::string name_, size_t buffer_size)
+    : SeekableReadBuffer(nullptr, 0), name(std::move(name_))
+{
+    buffer.resize(buffer_size);
+}
+
+bool ReadBufferFromJSFile::nextImpl()
+{
+    throw Exception(ErrorCodes::NETWORK_ERROR, "Registered JS files are not available on WASI (file: {})", name);
+}
+
+off_t ReadBufferFromJSFile::seek(off_t, int)
+{
+    throw Exception(ErrorCodes::CANNOT_SEEK_THROUGH_FILE, "Registered JS files are not available on WASI (file: {})", name);
+}
+
+off_t ReadBufferFromJSFile::getPosition()
+{
+    return read_offset;
+}
+
+std::optional<size_t> ReadBufferFromJSFile::tryGetFileSize()
+{
+    return std::nullopt;
+}
+
+std::optional<size_t> tryGetJSFileSize(const std::string &)
+{
+    return std::nullopt;
+}
+
+}
+
+#elif defined(OS_WASM)
 
 #include <Common/Exception.h>
 #include <emscripten.h>

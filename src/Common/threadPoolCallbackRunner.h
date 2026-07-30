@@ -437,8 +437,8 @@ public:
     void shutdown();
 
 private:
-    static constexpr Int64 SHUTDOWN_START = 1l << 42; // shutdown requested
-    static constexpr Int64 SHUTDOWN_END = 1l << 52; // no shared locks remain
+    static constexpr Int64 SHUTDOWN_START = Int64(1) << 42; // shutdown requested (1l overflows on 32-bit targets)
+    static constexpr Int64 SHUTDOWN_END = Int64(1) << 52; // no shared locks remain
 
     /// If >= SHUTDOWN_START, no new try_lock_shared() calls will succeed.
     /// Whoever changes the value to exactly SHUTDOWN_START (i.e. shutdown requested, no shared locks)

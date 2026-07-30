@@ -41,7 +41,7 @@ public:
     Timer & operator = (const Timer &) = delete;
     ~Timer();
 
-    void createIfNecessary(UInt64 thread_id, int clock_type, int pause_signal);
+    void createIfNecessary(UInt64 thread_id, clockid_t clock_type, int pause_signal);
     void set(UInt64 period);
     void stop();
     void cleanup();
@@ -63,7 +63,7 @@ public:
     void setPeriod(UInt64 period_);
 
 private:
-    QueryProfilerBase(UInt64 thread_id, int clock_type, UInt64 period, int pause_signal_);
+    QueryProfilerBase(UInt64 thread_id, clockid_t clock_type, UInt64 period, int pause_signal_);
     void cleanup();
 
     LoggerPtr log;

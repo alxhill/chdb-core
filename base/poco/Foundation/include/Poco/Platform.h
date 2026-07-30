@@ -61,7 +61,7 @@
 #elif defined(__NACL__)
 #    define POCO_OS_FAMILY_UNIX 1
 #    define POCO_OS POCO_OS_NACL
-#elif defined(linux) || defined(__linux) || defined(__linux__) || defined(__TOS_LINUX__) || defined(EMSCRIPTEN)
+#elif defined(linux) || defined(__linux) || defined(__linux__) || defined(__TOS_LINUX__) || defined(EMSCRIPTEN) || defined(__wasi__)
 #    define POCO_OS_FAMILY_UNIX 1
 #    if defined(__ANDROID__)
 #        define POCO_OS POCO_OS_ANDROID
@@ -128,7 +128,7 @@
 #if defined(__ALPHA) || defined(__alpha) || defined(__alpha__) || defined(_M_ALPHA)
 #    define POCO_ARCH POCO_ARCH_ALPHA
 #    define POCO_ARCH_LITTLE_ENDIAN 1
-#elif defined(i386) || defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(EMSCRIPTEN)
+#elif defined(i386) || defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(EMSCRIPTEN) || defined(__wasi__)
 #    define POCO_ARCH POCO_ARCH_IA32
 #    define POCO_ARCH_LITTLE_ENDIAN 1
 #elif defined(_IA64) || defined(__IA64__) || defined(__ia64__) || defined(__ia64) || defined(_M_IA64)

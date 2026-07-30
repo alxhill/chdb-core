@@ -525,11 +525,12 @@ bool PaimonRestCatalog::tryGetTableMetadata(const String & database_name, const 
             switch (table_storage_type)
             {
                 case StorageType::S3: {
-                    static constexpr std::array<String, 3> access_key_id_strs
+                    /// Not constexpr: the literals exceed 32-bit std::string SSO capacity.
+                    static const std::array<String, 3> access_key_id_strs
                         = {"fs.s3a.access-key", "fs.s3a.access.key", "fs.oss.accessKeyId"};
-                    static constexpr std::array<String, 3> secret_access_key_strs
+                    static const std::array<String, 3> secret_access_key_strs
                         = {"fs.s3a.secret-key", "fs.s3a.secret.key", "fs.oss.accessKeySecret"};
-                    static constexpr std::array<String, 1> session_token_strs = {"fs.oss.securityToken"};
+                    static const std::array<String, 1> session_token_strs = {"fs.oss.securityToken"};
 
                     std::string access_key_id;
                     std::string secret_access_key;

@@ -167,6 +167,10 @@ catch (const std::exception &)
 
 unsigned getNumberOfCPUCoresToUseImpl()
 {
+#if defined(OS_WASI)
+    /// Single-threaded WASI build; hardware_concurrency() may report 0 there.
+    return 1;
+#endif
     unsigned cores = std::thread::hardware_concurrency(); /// logical cores (with SMT/HyperThreading)
 
 #if defined(__x86_64__) && defined(OS_LINUX)

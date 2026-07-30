@@ -186,7 +186,8 @@ private:
 
     LoggerPtr log;
 
-    constexpr static String PARTITION_DEFAULT_VALUE = "__DEFAULT_PARTITION__";
+    /// Not constexpr: the literal exceeds 32-bit std::string SSO capacity.
+    static inline const String PARTITION_DEFAULT_VALUE = "__DEFAULT_PARTITION__";
 
     /// Background refresh. `refresh_task` must be declared last so it is destroyed first:
     /// ~BackgroundSchedulePoolTaskHolder calls deactivate() which synchronizes with runBackgroundRefresh()

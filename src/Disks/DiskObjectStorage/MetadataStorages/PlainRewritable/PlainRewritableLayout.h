@@ -10,7 +10,8 @@ namespace DB
 class PlainRewritableLayout
 {
 public:
-    constexpr static std::string PREFIX_PATH_FILE_NAME = "prefix.path";
+    /// Not constexpr: "prefix.path" exceeds 32-bit std::string SSO capacity.
+    static inline const std::string PREFIX_PATH_FILE_NAME = "prefix.path";
     constexpr static std::string METADATA_DIRECTORY_TOKEN = "__meta";
     constexpr static std::string ROOT_DIRECTORY_TOKEN = "__root";
 

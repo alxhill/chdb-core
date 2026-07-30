@@ -4,6 +4,7 @@
 #include <base/getPageSize.h>
 #include <base/Numa.h>
 
+#include <cstdlib>
 #include <fstream>
 
 #include <unistd.h>
@@ -48,6 +49,14 @@ std::optional<uint64_t> getCgroupsV2MemoryLimit()
 
 uint64_t getMemoryAmountOrZero()
 {
+#if defined(OS_WASI)
+    /// wasi-libc cannot report physical memory (sysconf(_SC_PHYS_PAGES) fails).
+    /// The linear memory grows on demand up to whatever the host allows; this
+    /// value only seeds cache sizes and the memory-limit heuristics.
+    if (const char * env = std::getenv("CHDB_MEMORY_AMOUNT"))
+        return std::strtoull(env, nullptr, 10);
+    return 4ULL << 30;
+#endif
     int64_t num_pages = sysconf(_SC_PHYS_PAGES);
     if (num_pages <= 0)
         return 0;

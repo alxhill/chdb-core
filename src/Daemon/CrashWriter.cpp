@@ -20,7 +20,8 @@ using namespace DB;
 
 namespace
 {
-constexpr std::string logger_name = "CrashWriter";
+/// Not constexpr: the literal exceeds 32-bit std::string SSO capacity.
+const std::string logger_name = "CrashWriter";
 }
 
 std::unique_ptr<CrashWriter> CrashWriter::instance;

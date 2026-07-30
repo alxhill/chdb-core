@@ -108,7 +108,8 @@ private:
     const ConnectionInfo connection_info;
     LoggerPtr log;
     size_t recently_used_url_index = 0;
-    constexpr static String LOCKS_STORAGE_CYPRESS_PATH = "//sys/locks";
+    /// Not constexpr: the literal exceeds 32-bit std::string SSO capacity.
+    static inline const String LOCKS_STORAGE_CYPRESS_PATH = "//sys/locks";
 };
 
 using YTsaurusClientPtr = std::shared_ptr<YTsaurusClient>;

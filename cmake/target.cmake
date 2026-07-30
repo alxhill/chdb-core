@@ -64,6 +64,39 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Emscripten")
     else ()
         add_definitions(-D CHDB_WASM_SINGLE_THREADED)
     endif ()
+elseif (CMAKE_SYSTEM_NAME MATCHES "WASI")
+    # WebAssembly via a WASI toolchain (wasi-sdk; cmake/wasi/toolchain.cmake).
+    # Experimental: shares the OS_WASM feature trim below, but the output is a
+    # plain .wasm importing wasip1 syscalls (no Emscripten JS glue), and libc is
+    # wasi-libc instead of Emscripten's musl+POSIX emulation.
+    set (OS_WASM 1)
+    set (OS_WASI 1)
+    add_definitions(-D OS_WASM)
+    add_definitions(-D OS_WASI)
+    add_definitions(-D _GNU_SOURCE)
+
+    # wasi-libc hides several POSIX APIs behind opt-in emulation layers.
+    add_definitions(-D _WASI_EMULATED_SIGNAL -D _WASI_EMULATED_MMAN -D _WASI_EMULATED_PROCESS_CLOCKS -D _WASI_EMULATED_GETPID)
+    add_link_options(-lwasi-emulated-signal -lwasi-emulated-mman -lwasi-emulated-process-clocks -lwasi-emulated-getpid)
+
+    # POSIX surface wasi-libc lacks but the (Emscripten-shaped) OS_WASM code
+    # paths expect: wrapper/stub headers, searched before the sysroot.
+    add_compile_options("-isystem" "${CMAKE_CURRENT_LIST_DIR}/wasi/compat-include")
+
+    # C++ exception catching, as on the Emscripten target — but emit the
+    # standardized exnref instructions (LLVM still defaults to the legacy EH
+    # opcodes, which wasmtime does not implement). wasi-sdk >= 33 ships
+    # eh-enabled libc++/libc++abi/libunwind variants selected by this flag;
+    # the unwinder itself is linked per-target (-lunwind resolves after the
+    # objects that need it).
+    add_compile_options(-fwasm-exceptions -mllvm -wasm-use-legacy-eh=false)
+    add_link_options(-fwasm-exceptions)
+
+    # wasm32-wasip1 has no threads (wasm32-wasip1-threads exists but is not
+    # attempted yet); start with the single-threaded degradation the
+    # Emscripten port already supports.
+    set (WASM_THREADS OFF CACHE BOOL "WASI target is single-threaded for now" FORCE)
+    add_definitions(-D CHDB_WASM_SINGLE_THREADED)
 else ()
     message (FATAL_ERROR "Platform ${CMAKE_SYSTEM_NAME} is not supported")
 endif ()
@@ -112,7 +145,10 @@ if (OS_WASM)
 
     # Build the slim chdb-core-lite feature set on WASM (disables ~30 optional
     # libs centrally). Set before the CHDB_LITE option()/block below so it sticks.
-    set (CHDB_LITE ON CACHE BOOL "WASM uses the chdb-core-lite trim set" FORCE)
+    # An explicit -DCHDB_LITE=OFF is respected (full/untrimmed WASM build).
+    if (NOT DEFINED CACHE{CHDB_LITE})
+        set (CHDB_LITE ON CACHE BOOL "WASM uses the chdb-core-lite trim set" FORCE)
+    endif ()
 
     # Go further than lite: the libs lite still opts-in but that WASM can't use
     # (native protoc bootstrap, networked object stores, heavy columnar formats).

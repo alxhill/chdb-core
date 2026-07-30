@@ -34,7 +34,12 @@ void LazyPipeFDs::open()
             // throw Exception(ErrorCodes::LOGICAL_ERROR, "Pipe is already opened");
             return;
 
-#ifndef OS_DARWIN
+#if defined(OS_WASI)
+    /// WASI p1 has no pipes. Leave the fds at -1 ("not opened"): the pipe
+    /// consumers on this build (signal listener, trace collector) can never
+    /// run — no signals are delivered and no threads can be spawned.
+    return;
+#elif !defined(OS_DARWIN)
     if (0 != pipe2(fds_rw, O_CLOEXEC))
         throw ErrnoException(ErrorCodes::CANNOT_PIPE, "Cannot create pipe");
 #else
@@ -84,6 +89,8 @@ LazyPipeFDs::~LazyPipeFDs()
 
 void LazyPipeFDs::setNonBlockingWrite()
 {
+    if (fds_rw[1] < 0)
+        return;
     int flags = fcntl(fds_rw[1], F_GETFL, 0);
     if (-1 == flags)
         throw ErrnoException(ErrorCodes::CANNOT_FCNTL, "Cannot get file status flags of pipe");
@@ -93,6 +100,8 @@ void LazyPipeFDs::setNonBlockingWrite()
 
 void LazyPipeFDs::setNonBlockingRead()
 {
+    if (fds_rw[0] < 0)
+        return;
     int flags = fcntl(fds_rw[0], F_GETFL, 0);
     if (-1 == flags)
         throw ErrnoException(ErrorCodes::CANNOT_FCNTL, "Cannot get file status flags of pipe");

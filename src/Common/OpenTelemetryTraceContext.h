@@ -36,12 +36,29 @@ private:
         bool>
         value;
 
+    /// Widen integrals with no exact variant alternative (e.g. size_t on ILP32,
+    /// where the conversion would be ambiguous between the 64-bit alternatives).
+    template <typename V>
+    static auto normalize(V v)
+    {
+        if constexpr (
+            std::is_same_v<V, bool> || std::is_same_v<V, int> || std::is_same_v<V, int64_t> || std::is_same_v<V, uint64_t>
+            || std::is_floating_point_v<V>)
+            return v;
+        else if constexpr (std::is_integral_v<V> && std::is_signed_v<V>)
+            return static_cast<int64_t>(v);
+        else if constexpr (std::is_integral_v<V>)
+            return static_cast<uint64_t>(v);
+        else
+            return v;
+    }
+
 public:
     template <typename V>
     requires (!std::is_constructible_v<String, std::decay_t<V>>)
     SpanAttribute(std::string_view k, V v)
         : key(k)
-        , value(std::forward<V>(v))
+        , value(normalize(std::move(v)))
     {
     }
 

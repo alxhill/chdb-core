@@ -133,7 +133,7 @@ Timer::Timer()
     : log(getLogger("Timer"))
 {}
 
-void Timer::createIfNecessary(UInt64 thread_id, int clock_type, int pause_signal)
+void Timer::createIfNecessary(UInt64 thread_id, clockid_t clock_type, int pause_signal)
 {
     if (!timer_id)
     {
@@ -235,7 +235,7 @@ void Timer::cleanup()
 
 template <typename ProfilerImpl>
 QueryProfilerBase<ProfilerImpl>::QueryProfilerBase(
-    [[maybe_unused]] UInt64 thread_id, [[maybe_unused]] int clock_type, [[maybe_unused]] UInt64 period, [[maybe_unused]] int pause_signal_)
+    [[maybe_unused]] UInt64 thread_id, [[maybe_unused]] clockid_t clock_type, [[maybe_unused]] UInt64 period, [[maybe_unused]] int pause_signal_)
     : log(getLogger("QueryProfiler")), pause_signal(pause_signal_)
 {
 #if defined(SANITIZER)

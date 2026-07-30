@@ -36,6 +36,15 @@ static size_t getStackSize(void ** out_address)
 {
     using namespace DB;
 
+#if defined(OS_WASI)
+    /// The wasm VM owns the stack and its bounds are not observable from the
+    /// guest. Returning 0 disables the check (the host traps safely on
+    /// exhaustion).
+    if (out_address)
+        *out_address = nullptr;
+    return 0;
+#endif
+
     size_t size;
     void * address;
 

@@ -20,7 +20,13 @@ namespace ProfileEvents
 {
     /// Event identifier (index in array).
     using Event = StrongTypedef<size_t, struct EventTag>;
+#if __SIZEOF_SIZE_T__ >= 8
     using Count = size_t;
+#else
+    /// 32-bit targets (wasm32): event/byte counters need 64 bits, and Counters::increment
+    /// requires sizeof(Count) == sizeof(Increment).
+    using Count = UInt64;
+#endif
     using Increment = Int64;
 
     struct Counter : public std::atomic<Count>

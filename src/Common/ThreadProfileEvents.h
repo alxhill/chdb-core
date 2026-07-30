@@ -64,8 +64,14 @@ struct RUsageCounters
         user_time = rusage.ru_utime.tv_sec * 1000000000UL + rusage.ru_utime.tv_usec * 1000UL;
         sys_time = rusage.ru_stime.tv_sec * 1000000000UL + rusage.ru_stime.tv_usec * 1000UL;
 
+#if defined(OS_WASI)
+        /// wasi-libc's struct rusage carries only ru_utime/ru_stime.
+        soft_page_faults = 0;
+        hard_page_faults = 0;
+#else
         soft_page_faults = static_cast<UInt64>(rusage.ru_minflt);
         hard_page_faults = static_cast<UInt64>(rusage.ru_majflt);
+#endif
 
         thread_id = getThreadId();
     }

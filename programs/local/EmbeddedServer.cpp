@@ -204,7 +204,16 @@ void EmbeddedServer::initialize(Poco::Util::Application & self)
 {
     setShuttingDown(false);
 
+#if defined(OS_WASI)
+    if (getenv("CHDB_BOOT_TRACE")) // NOLINT(concurrency-mt-unsafe)
+        fprintf(stderr, "[wasi-boot] initialize: enter\n");
+#endif
     Poco::Util::Application::initialize(self);
+#if defined(OS_WASI)
+    if (getenv("CHDB_BOOT_TRACE")) // NOLINT(concurrency-mt-unsafe)
+        fprintf(stderr, "[wasi-boot] initialize: after Application::initialize\n");
+#endif
+
 
     const char * home_path_cstr = getenv("HOME"); // NOLINT(concurrency-mt-unsafe)
     if (home_path_cstr)
@@ -212,6 +221,10 @@ void EmbeddedServer::initialize(Poco::Util::Application & self)
 
     /// Load config files if exists
     std::string config_path;
+#if defined(OS_WASI)
+    if (getenv("CHDB_BOOT_TRACE")) // NOLINT(concurrency-mt-unsafe)
+        fprintf(stderr, "[wasi-boot] initialize: before config discovery\n");
+#endif
     if (config().has("config-file"))
         config_path = config().getString("config-file");
     else if (config_path.empty() && fs::exists("config.xml"))
@@ -219,7 +232,11 @@ void EmbeddedServer::initialize(Poco::Util::Application & self)
     else if (config_path.empty())
         config_path = getLocalConfigPath(home_path).value_or("");
 
-    if (fs::exists(config_path))
+#if defined(OS_WASI)
+    if (getenv("CHDB_BOOT_TRACE")) // NOLINT(concurrency-mt-unsafe)
+        fprintf(stderr, "[wasi-boot] initialize: config discovered: '%s'\n", config_path.c_str());
+#endif
+    if (!config_path.empty() && fs::exists(config_path))
     {
         ConfigProcessor config_processor(config_path);
         ConfigProcessor::setConfigPath(fs::path(config_path).parent_path());
@@ -227,6 +244,10 @@ void EmbeddedServer::initialize(Poco::Util::Application & self)
         config().add(loaded_config.configuration.duplicate(), PRIO_DEFAULT, false);
     }
 
+#if defined(OS_WASI)
+    if (getenv("CHDB_BOOT_TRACE")) // NOLINT(concurrency-mt-unsafe)
+        fprintf(stderr, "[wasi-boot] initialize: config loaded\n");
+#endif
     server_settings.loadSettingsFromConfig(config());
 
     GlobalThreadPool::initialize(
@@ -579,6 +600,10 @@ void EmbeddedServer::setupUsers()
 int EmbeddedServer::main(const std::vector<std::string> & /*args*/)
 try
 {
+#if defined(OS_WASI)
+    if (getenv("CHDB_BOOT_TRACE")) // NOLINT(concurrency-mt-unsafe)
+        fprintf(stderr, "[wasi-boot] main: enter\n");
+#endif
     StackTrace::setShowAddresses(server_settings[ServerSetting::show_addresses_in_stack_traces]);
     std::cout << std::fixed << std::setprecision(3);
     std::cerr << std::fixed << std::setprecision(3);
@@ -639,7 +664,15 @@ try
             registerFormats();
         });
 
+#if defined(OS_WASI)
+    if (getenv("CHDB_BOOT_TRACE")) // NOLINT(concurrency-mt-unsafe)
+        fprintf(stderr, "[wasi-boot] main: registrations done\n");
+#endif
     processConfig();
+#if defined(OS_WASI)
+    if (getenv("CHDB_BOOT_TRACE")) // NOLINT(concurrency-mt-unsafe)
+        fprintf(stderr, "[wasi-boot] main: processConfig done\n");
+#endif
     /// try to load user defined executable functions, throw on error and die
     try
     {
@@ -682,12 +715,22 @@ void EmbeddedServer::processConfig()
     config().setString("logger", "logger");
     config().setString("logger.level", logging ? level : "fatal");
     buildLoggers(config(), logger(), "clickhouse-embedded");
+#if defined(OS_WASI)
+    if (getenv("CHDB_BOOT_TRACE")) // NOLINT(concurrency-mt-unsafe)
+        fprintf(stderr, "[wasi-boot] processConfig: loggers built\n");
+#endif
+
     shared_context = Context::createSharedHolder();
     global_context = Context::createGlobal(shared_context.get());
     global_context->makeGlobalContext();
     global_context->setApplicationType(Context::ApplicationType::LOCAL);
 
     tryInitPath();
+#if defined(OS_WASI)
+    if (getenv("CHDB_BOOT_TRACE")) // NOLINT(concurrency-mt-unsafe)
+        fprintf(stderr, "[wasi-boot] processConfig: path initialized\n");
+#endif
+
 
     LoggerRawPtr log = &logger();
 
@@ -1136,7 +1179,12 @@ void EmbeddedServer::initializeWithArgs(int argc, char ** argv)
     }
     catch (const std::exception & e)
     {
-        LOG_ERROR(&Poco::Logger::get("EmbeddedServer"), "Failed to initialize EmbeddedServer: {}", e.what());
+        /// getCurrentExceptionMessage: Poco exceptions carry their detail (e.g.
+        /// assertion file:line) in displayText(), which what() drops.
+        LOG_ERROR(
+            &Poco::Logger::get("EmbeddedServer"),
+            "Failed to initialize EmbeddedServer: {}",
+            DB::getCurrentExceptionMessage(/*with_stacktrace=*/true));
         throw;
     }
 }

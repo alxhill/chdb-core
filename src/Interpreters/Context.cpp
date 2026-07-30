@@ -3542,8 +3542,9 @@ void Context::makeGlobalContext()
 void Context::makeBackgroundContext(const Poco::Util::AbstractConfiguration & config)
 {
     assert(!background_context_instance);
-    static constexpr std::string background_profile_name_setting = "background_profile";
-    static constexpr std::string background_profile_default_name = "background";
+    /// Not constexpr: the literals exceed 32-bit std::string SSO capacity.
+    static const std::string background_profile_name_setting = "background_profile";
+    static const std::string background_profile_default_name = "background";
 
     if (config.has(background_profile_name_setting))
         /// 1. if background profile name setting is set explicitly - it'll be used, and will throw on lacking profile configuration

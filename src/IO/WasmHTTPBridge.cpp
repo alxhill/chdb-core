@@ -1,6 +1,22 @@
 #include <IO/WasmHTTPBridge.h>
 
-#if defined(OS_WASM)
+#if defined(OS_WASI)
+
+/// WASI has no JS host to perform HTTP for us; report "request could not be
+/// performed" (status -1), which callers surface as a network error.
+
+namespace DB
+{
+
+WasmHTTPResult performWasmHTTPRequest(
+    const std::string &, const std::string &, const std::string &, const std::string &, long long, long long)
+{
+    return WasmHTTPResult{};
+}
+
+}
+
+#elif defined(OS_WASM)
 
 #include <cstdint>
 #include <cstdlib>
